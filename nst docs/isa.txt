@@ -1,0 +1,113 @@
+
+	16 bit general purpose registers with 8 bit halves and 4-8 SIMD
+		A - AX AH AL
+		B - BX BH BL
+		C - CX CH CL
+		D - DX DH DL
+	
+	16 bit index registers
+		Index I
+		Index J
+	
+	32 bit address registers
+		Stack Pointer SP
+		Base Pointer BP
+	
+	Special purpose registers
+		Instruction Pointer IP (32 bit)
+			not accessed directly
+		
+		Arithmetic Flags F (16 bit)
+			support push/pop & bitwise operations
+		
+		Processor Flags PF (16 bit)
+			can be moved
+	
+	F layout
+	|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+	|  F |  E |  D |  C |  B |  A |  9 |  8 |  7 |  6 |  5 |  4 |  3 |  2 |  1 |  0 |
+	|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+	| Z3 | O3 | S3 | C3 | Z2 | O2 | S2 | C2 | Z1 | O1 | S1 | C1 | Z0 | O0 | S0 | C0 | packed 4s
+	|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+	|                   | Z1 | O1 | S1 | C1 |                   | Z0 | O0 | S0 | C0 | packed 8s
+	|-------------------|----|----|----|----|-------------------|----|----|----|----|
+	|                                                           | Z0 | O0 | S0 | C0 | 8/16 bit, conditions
+	|-----------------------------------------------------------|----|----|----|----|
+	
+	PF layout
+	|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+	|  F |  E |  D |  C |  B |  A |  9 |  8 |  7 |  6 |  5 |  4 |  3 |  2 |  1 |  0 |
+	|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+	|                                                                          | IE |
+	|--------------------------------------------------------------------------|----|
+	IE: Interrupt Enable (default 1)
+	
+	
+	rim bytes
+	|---|---|---|---|---|---|---|---|
+	| 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+	|---|---|---|---|---|---|---|---|
+	| s | r |       reg |       rim |
+	|---|---|-----------|-----------|
+	
+	r rim type:	0 = register-register, 1 = register-immediate/register-memory
+	
+	size	normal	wide	packed
+	0		16 bit	32 bit	2x8
+	1		8 bit	16 bit 	4x4
+	
+	bio bytes
+	|---|---|---|---|---|---|---|---|
+	| 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+	|---|---|---|---|---|---|---|---|
+	| scale | pair base |     index |
+	|-------|-----------|-----------|
+	
+	addr = base + (index * scale) + offset
+	
+	if there is an index, scale is the number of left-shifts applied to the index, and the offset is 32-bit
+	if there is no index, (scale + 1) is the number of bytes of the offset
+	
+	value	reg			immediate/memory
+			16  8
+	000		A	AL		immediate value source
+	001		B	BL		immediate address source
+	010		C	CL		base + index source
+	011		D	DL		base + index + offset source
+	100		I	AH		???
+	101		J	BH		immediate address destination
+	110		BP	CH		base + index destination
+	111		SP	DH		base + index + offset destination
+	
+			pair	index
+	000		D:A		A
+	001		A:B		B
+	010		B:C		C
+	011		C:D		D
+	100		J:I		I
+	101		I:J		J
+	110		BP		BP
+	111		SP/none	none
+	
+	As an argument, pair 111 is always SP
+	As a base, pair 111 is SP if the index is none (111), and is none otherwise.
+	[SP + offset] is a valid address, while [base + (scale * SP) + offset] is not.
+	
+	Sources for BP and SP are always 32 bits (pairs) unless the operation specifies its size,
+	including when the source is ignored by the operation.
+	MOVW uses pairs for both sources and destinations.
+	Wide destination operations use wide destinations and normal sources. If BP or SP are used
+	as a source for a wide destination operation, their lower 16 bits are used.
+	MOVS sign extends, and MOVZ zero extends.
+	
+	Packed RIM is restricted to register destinations A/D:A, B/A:B, C/B:C, and D/C:D.
+	In other words, the reg and rim values ignore the most significant bit.
+	
+	For division, the carry and overflow flags are set appropriately if the quotient is too
+	large for the destination. The zero flag is set if both quotient and remainder (if applicible)
+	are zero. The sign flag is set according to the quotient.	
+	
+	Interrupts push IP, then flags, then jump to the address at [arg * 4]
+	Made for interrupts, PUSHA pushes, in order, A, B, C, D, I, J, BP. POPA pops the equivalent.
+		
+	Conditions match x86

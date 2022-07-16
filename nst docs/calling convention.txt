@@ -1,0 +1,4 @@
+
+	Arguments are passed on the stack right to left
+	Index and pointer registers are preserved
+	Return value in D:A
