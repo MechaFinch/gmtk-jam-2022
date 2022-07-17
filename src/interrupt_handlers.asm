@@ -11,9 +11,11 @@
 %include globals.asm as globals
 %include runlater.asm as later
 %include "lib/text.asm" as txt
+%include tree_walker.asm as dtree
 
 %define CURSOR_PERIOD 5
 %define CURSOR_COLOR 0xFF
+%define KEYBOARD_BUFFER 0xF000_0006
 
 ; update global timer
 ; updates the global timer
@@ -28,12 +30,16 @@ update_global_timer:
 	; runlater hook
 	CALL later.hook
 	
+	; change time left string
+	
 	; toggle cursor if applicible
 	MOV B, I
 	DIVM B, CURSOR_PERIOD
 	
 	CMP BH, 0
 	JNE .dont_toggle
+	CMP byte [globals.cursor_enabled], 0
+	JE .dont_toggle
 	
 	CMP byte [globals.cursor_state], 0
 	JNE .toggle_cursor_off
@@ -69,7 +75,27 @@ update_global_timer:
 keyboard_input:
 	PUSHA
 	
+	; get key
+	MOV AL, [KEYBOARD_BUFFER]
 	
+	; is this a number
+	CMP AL, 0x30
+	JB .return
+	CMP AL, 0x39
+	JA .return
 	
+	; call choice making function
+	SUB AL, 0x30
+	JNZ .dont_corret
+	
+	ADD AL, 10
+	
+.dont_corret:
+	DEC AL
+	PUSH AL
+	CALL dtree.make_choice
+	ADD SP, 1
+	
+.return:
 	POPA
 	IRET

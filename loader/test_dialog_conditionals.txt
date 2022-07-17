@@ -1,0 +1,35 @@
+
+::main
+main page
+
+[[set condition true]]set condition true
+[[set condition false]]set condition false
+[[check condition]]check condition
+
+::set condition true
+set true
+
+[[main]]ok
+>>logic.set_flag_true(flags.test)
+
+::set condition false
+set false
+
+[[main]]ok
+>>logic.set_flag_false(flags.test)
+
+::check condition
+>>logic.goto_conditional(flags.test, [[true]], [[false]])
+>>dtree.render_page()
+
+::true
+gaming flag was true
+
+>>dtree.set_dialog([[main]])
+>>dtree.render_page()
+
+::false
+gaming flag was false
+
+>>dtree.set_dialog([[main]])
+>>dtree.render_page()

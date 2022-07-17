@@ -11,7 +11,7 @@
 ;		hook
 ;
 
-%libname runlater
+%libname later
 %include "lib/dma.asm" as mem
 %include globals.asm as globals
 
@@ -37,13 +37,20 @@ hook:
 .loop:
 	; get & compare entry time
 	MOV C:D, [A:B + I*8 + 0]
+	
+	CMP C, 0
+	JNE .check
+	CMP D, 0
+	JE .next
+
+.check:
 	MOV A:B, globals.global_timer
 	
 	CMP C, [A:B + 2]
-	JL .next
+	JA .next
 	
 	CMP D, [A:B + 0]
-	JL .next
+	JA .next
 	
 	; remove entry
 	MOV A:B, [globals.runlater_pointer]
@@ -80,6 +87,8 @@ set_timer:
 	; otherwise, realloc the array and use the new spot	
 	MOVW A:B, [globals.runlater_pointer]
 	MOV I, [globals.runlater_size]
+	DEC I
+	
 .loop:
 	MOV C:D, [A:B + I*8 + 0]
 	CMP C, 0
@@ -96,8 +105,11 @@ set_timer:
 
 .next:
 	MOV A:B, [globals.runlater_pointer]
+	
+	CMP I, 0
+	JE .not_found
 	DEC I
-	JNZ .loop
+	JMP .loop
 
 .not_found:
 	; realloc array
@@ -111,19 +123,21 @@ set_timer:
 	SHL C, 3
 	
 	PUSH C
-	PUSH A:B
+	PUSH A
+	PUSH B
 	CALL mem.func_realloc
 	ADD SP, 6
 	
 	MOVW [globals.runlater_pointer], D:A
 	
 	; use new spot
+.use:
 	POP I
 	DEC I
-	MOVW C:D, [BP + 8]
-	MOVW [D:A + I*8 + 0], C:D
-	MOVW C:D, [BP + 12]
-	MOVW [D:A + I*8 + 4], C:D
+	MOVW B:C, [BP + 8]
+	MOVW [D:A + I*8 + 0], B:C
+	MOVW B:C, [BP + 12]
+	MOVW [D:A + I*8 + 4], B:C
 	
 	MOV C, 0
 	MOV [globals.runlater_operating], CL
@@ -131,5 +145,28 @@ set_timer:
 .return:
 	POP J
 	POP I
+	POP BP
+	RET
+
+
+; function void set_timer_var(ptr variable, ptr function)
+; sets the function to run at (global timer) + (the time at the variable)
+set_timer_var:
+	PUSH BP
+	MOV BP, SP
+	
+	MOV C, 2
+	MOVW A:B, [BP + 8]
+	MOVW A:B, [A:B]
+	ADD B, [globals.global_timer]
+	ADC A, [globals.global_timer + C]
+	
+	PUSH word [BP + 14]
+	PUSH word [BP + 12]
+	PUSH A
+	PUSH B
+	CALL set_timer
+	ADD SP, 8
+	
 	POP BP
 	RET

@@ -10,6 +10,8 @@
 %include dialog.obj as dialog
 %include "lib/dma.asm" as mem
 %include globals.asm as globals
+%include game_logic.asm as logic
+%include constants.asm as constants
 
 main:
 	; init memory allocator
@@ -32,19 +34,26 @@ main:
 	MOVW A:B, dialog.root
 	MOVW [globals.dialog_pointer], A:B
 	
+	; enable dialog choices
+	MOV A, 1
+	MOV [globals.dialog_can_make_choice], AL
+	
 	; runlater array
 	PUSH word 16
 	CALL mem.func_malloc
 	ADD SP, 2
 	
-	; cursor test
-	MOV A, 0x0505
-	MOV [globals.cursor_position], A
-
-.brk:
 	MOVW [globals.runlater_pointer], D:A
 	MOV A, 2
 	MOV [globals.runlater_size], A
+	
+	; enable cursor
+	MOV A, 1
+	MOV [globals.cursor_enabled], AL
+	
+	; start cursor at bottom of screen
+	MOV A, 29
+	MOV [globals.cursor_position], A
 	
 .start:
 	; render first dialog page

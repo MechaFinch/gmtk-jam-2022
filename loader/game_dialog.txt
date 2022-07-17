@@ -1,0 +1,1050 @@
+::title
+
+You are in space. A massive cube stands
+before you. You are reading the
+terminal on its side. &tYou think you
+might find something interesting here.
+
+&FFPress number keys to select options.
+
+[[main clear]] Begin
+
+::main clear
+>>later.set_timer(constants.five_minutes, logic.goto_end)
+>>text.func_clear_screen()
+>>dtree.goto([[main]])
+
+
+
+
+::main
+
+[[command dir 1]]List directory contents
+[[command special 1]]Run a command
+
+::command dir 1
+>>dtree.type("ls     ")
+>>dtree.goto([[command dir 1 conts]])
+
+::command dir 1 conts
+
+dice       DIR
+sensors    DIR
+thrusters  DIR
+
+[[dice directory]]Go to &FFdice
+[[sensors directory]]Go to &FFsensors
+[[thrusters directory]]Go to &FFthrusters
+
+
+
+
+
+::sensors directory
+>>logic.goto_conditional(flags.diagnostics_run, [[sensors directory active]], [[sensors directory inactive]])
+
+
+
+
+
+::thrusters directory
+>>logic.goto_conditional(flags.diagnostics_run, [[thrusters directory active]], [[thrusters directory inactive]])
+
+
+
+
+
+
+::thrusters directory active
+>>dtree.type("cd thrusters")
+>>dtree.goto([[thrusters directory active cont1]])
+
+::thrusters directory active cont1
+
+>>dtree.type("status")
+>>dtree.goto([[thrusters directory active cont2]])
+
+::thrusters directory active cont2
+
+>>logic.goto_conditional(flags.forward_active, [[thrusters forward active]], [[thrusters forward inactive]])
+
+::thrusters forward active
+main_forwards    FIRING
+>>logic.goto_conditional(flags.backward_active, [[thrusters backwards active]], [[thrusters backwards inactive]])
+
+::thrusters forward inactive
+main_forwards    IDLE
+>>logic.goto_conditional(flags.backward_active, [[thrusters backwards active]], [[thrusters backwards inactive]])
+
+
+::thrusters backwards active
+main_backwards   FIRING
+>>dtree.goto([[thrusters directory active cont3]])
+
+::thrusters backwards inactive
+main_backwards   IDLE
+>>dtree.goto([[thrusters directory active cont3]])
+
+
+
+::thrusters directory active cont3
+
+[[thrusters active toggle forwards]]&FFtoggle&c main_forwards
+[[thrusters active toggle backwards]]&FFtoggle&c main_backwards
+[[back command]]Go back
+
+
+
+
+
+::thrusters active toggle forwards
+>>dtree.type("toggle main_forwards")
+>>logic.goto_conditional(flags.forward_active, [[clear forward active]], [[set forward active]])
+
+::thrusters active toggle backwards
+>>dtree.type("toggle main_backwards")
+>>logic.goto_conditional(flags.backward_active, [[clear backward active]], [[set backward active]])
+
+
+
+::clear forward active
+>>logic.clear_forward_active()
+>>logic.goto_conditional(flags.backward_active, [[set_thrusters_activated]], [[clear_thrusters_activated]])
+
+::set forward active
+>>logic.set_forward_active()
+>>logic.goto_conditional(flags.backward_active, [[clear_thrusters_activated]], [[set_thrusters_activated]])
+
+::clear backward active
+>>logic.clear_backward_active()
+>>logic.goto_conditional(flags.forward_active, [[set_thrusters_activated]], [[clear_thrusters_activated]])
+
+::set backward active
+>>logic.set_backward_active()
+>>logic.goto_conditional(flags.forward_active, [[clear_thrusters_activated]], [[set_thrusters_activated]])
+
+::clear thrusters_activated
+>>logic.clear_thrusters_activated()
+>>dtree.goto([[thrusters directory active cont1]])
+
+::set thrusters_activated
+>>logic.set_thrusters_activated()
+>>dtree.goto([[thrusters directory active cont1]])
+
+
+
+
+
+
+
+
+
+::thrusters directory inactive
+>>dtree.type("cd thrusters")
+>>dtree.goto([[thrusters directory inactive cont1]])
+
+::thrusters directory inactive cont1
+>>dtree.type("ls")
+>>dtree.goto([[thrusters directory inactive cont2]])
+
+::thrusters directory inactive cont2
+
+status     EXE
+toggle     EXE
+
+[[thrusters inactive status]]&FFstatus
+[[thrusters inactive toggle]]&FFtoggle
+
+
+
+::thrusters inactive toggle
+>>dtree.type("toggle")
+>>dtree.goto([[thrusters inactive toggle cont1]])
+
+::thrusters inactive toggle cont1
+
+Please specify a thruster to toggle.
+
+>>dtree.goto([[thrusters directory inactive cont1]])
+
+
+
+
+::thrusters inactive status
+>>dtree.type("status")
+>>dtree.goto([[thrusters inactive status cont1]])
+
+::thrusters inactive status cont1
+
+main_forwards    ERROR
+main_backwards   ERROR
+
+[[thrusters inactive toggle forwards]]&FFtoggle&c forwards
+[[thrusters inactive toggle backwards]]&FFtoggle&c backwards
+[[back command]]Go back
+
+
+::thrusters inactive toggle forwards
+>>dtree.type("toggle main_forwards")
+>>dtree.goto([[thrusters inactive toggle specify]])
+
+::thrusters inactive toggle backwards
+>>dtree.type("toggle main_backwards")
+>>dtree.goto([[thrusters inactive toggle specify]])
+
+
+::thrusters inactive toggle specify
+
+&C0error&FF
+Run internal diagnostics or contact
+manufacturer.
+
+>>dtree.goto([[thrusters inactive status]])
+
+
+
+
+
+::sensors directory active
+>>dtree.type("cd sensors")
+>>dtree.goto([[sensors directory active cont1]])
+
+::sensors directory active cont1
+
+>>dtree.type("status")
+>>dtree.goto([[sensors directory active cont2]])
+
+::sensors directory active cont2
+
+short range scan       READY
+wide area scan         READY
+internal diagnostics   READY
+
+>>dtree.type("ls")
+>>dtree.goto([[sensors directory active cont3]])
+
+::sensors directory active cont3
+
+status     EXE
+run        EXE
+
+[[sensors active short range]]&FFrun&c short range scan
+[[sensors active wide area]]&FFrun&c wide area scan
+[[sensors active internal]]&FFrun&c diagnostics
+[[back command]]Go back
+
+
+
+
+
+::back command
+>>dtree.type("cd ..")
+>>dtree.goto([[command dir 1]])
+
+
+
+
+::sensors active internal
+>>dtree.type("run diagnostics")
+>>dtree.goto([[sensors active internal cont1]])
+
+::sensors active internal cont1
+
+Running internal diagnostics...
+>>dtree.type("      ")
+>>dtree.goto([[sensors active internal cont2]])
+
+::sensors active internal cont2
+
+No errors found.
+
+>>dtree.goto([[sensors directory active cont1]])
+
+
+
+
+
+
+::sensors active short range
+>>dtree.type("run short")
+>>dtree.goto([[sensors active short range cont1]])
+
+::sensors active short range cont1
+
+Running short range scan...
+
+>>dtree.type("                  ")
+>>logic.goto_conditional(flags.thrusters_activated, [[sensors active short range thrusters on]], [[sensors active short range thrusters off]])
+
+::sensors active short range thrusters off
+
+&EAObject&FF detected. &C0Object is on
+collision course.&FF Estimating time to
+collision...
+
+>>dtree.type("     ")
+>>dtree.goto([[sensors active short range thrusters off cont1]])
+
+::sensors active short range thrusters off cont1
+
+>>dtree.type(globals.time_left_string)
+>>dtree.goto([[sensors directory active cont2]])
+
+::sensors active short range thrusters on
+
+&EAObject&FF dectected. &EAObject&FF will pass
+within 2km, but will not collide.
+
+>>dtree.goto([[sensors directory active cont2]])
+
+
+
+
+::sensors active wide area
+>>dtree.type("run wide")
+>>dtree.goto([[sensors active wide area cont1]])
+
+::sensors active wide area cont1
+
+Running wide area scan...
+
+>>dtree.type("                           ")
+>>dtree.goto([[sensors active wide area cont2]])
+
+::sensors active wide area cont2
+
+&EAObject&FF detected. &EAObject&FF is
+within short-range scanner's range.
+Short range scan recommended for more
+information.
+
+>>dtree.goto([[sensors directory active cont2]])
+
+
+
+
+
+::sensors directory inactive
+>>dtree.type("cd sensors")
+>>dtree.goto([[sensors directory inactive cont1]])
+
+::sensors directory inactive cont1
+
+>>dtree.type("ls")
+>>dtree.goto([[sensors directory inactive cont2]])
+
+::sensors directory inactive cont2
+
+status     EXE
+run        EXE
+
+[[sensors inactive status]]&FFstatus
+[[sensors inactive run]]&FFrun
+
+
+
+
+::sensors inactive run
+>>dtree.type("run")
+>>dtree.goto([[sensors inactive run cont1]])
+
+::sensors inactive run cont1
+
+Please specify a sensor routine to run.
+
+>>dtree.goto([[sensors directory inactive cont1]])
+
+
+
+
+::sensors inactive status
+>>dtree.type("status")
+>>dtree.goto([[sensors inactive status cont1]])
+
+::sensors inactive status cont1
+
+short range scan       ERROR
+wide area scan         ERROR
+internal diagnostics   READY
+
+[[sensors inactive short]]&FFrun&c short range scan
+[[sensors inactive wide area]]&FFrun&c wide area scan
+[[sensors inactive diagnostics]]&FFrun&c diagnostics
+[[back command]]Go back
+
+
+
+
+
+::sensors inactive diagnostics
+>>dtree.type("run diagnostics")
+>>dtree.goto([[sensors inactive diagnostics cont1]])
+
+::sensors inactive diagnostics cont1
+
+Running internal diagnostics...
+>>dtree.type("       ")
+>>dtree.goto([[sensors inactive diagnostics cont2]])
+
+::sensors inactive diagnostics cont2
+
+Found &C017&FF scanner errors.
+Found &C081&FF thruster errors.
+Fixing...
+>>dtree.type("                         ")
+>>dtree.goto([[sensors inactive diagnostics cont3]])
+
+::sensors inactive diagnostics cont3
+>>dtree.type("                              ")
+>>dtree.goto([[sensors inactive diagnostics cont4]])
+
+::sensors inactive diagnostics cont4
+
+Done.
+
+>>logic.set_diagnostics_run()
+>>dtree.goto([[sensors directory active cont1]])
+
+
+
+
+
+
+::sensors inactive short
+>>dtree.type("run short")
+>>dtree.goto([[sensors inactive short cont1]])
+
+::sensors inactive short cont1
+
+Running short range scan...
+
+>>dtree.type("                  ")
+>>dtree.goto([[sensors inactive err]])
+
+
+
+
+
+::sensors inactive wide area
+>>dtree.type("run wide")
+>>dtree.goto([[sensors inactive wide area cont1]])
+
+::sensors inactive wide area cont1
+
+Running wide area scan...
+
+>>dtree.type("                            ")
+>>dtree.goto([[sensors inactive err]])
+
+
+
+
+
+::sensors inactive err
+
+&C0error&FF
+Run internal diagnostics or contact
+manufacturer
+
+>>dtree.goto([[sensors inactive status]])
+
+
+
+
+
+
+::dice directory
+>>dtree.type("cd dice")
+>>dtree.goto([[dice directory cont1]])
+
+::dice directory cont1
+
+>>dtree.type("ls")
+>>dtree.goto([[dice directory conts]])
+
+::dice directory conts
+
+die 0
+die 1
+die 2
+die 3
+die 4
+die 5
+die 6
+die 7
+die 8
+die 9
+die 10
+die 11
+die 12
+die 13
+die 14
+die 15
+die 16
+die 17
+die 18
+die 19
+die 20
+die 21
+die 22
+die 23
+die 24
+die 25
+die 26
+die 27
+die 28
+die 29
+die 30
+die 31
+die 32
+die 33
+die 34
+die 35
+die 36
+die 37
+die 38
+die 39
+die 40
+die 41
+die 42
+die 43
+die 44
+die 45
+&tyou might be here a while&FF
+die 46
+die 47
+die 48
+die 49
+die 50
+die 51
+die 52
+die 53
+die 54
+die 55
+die 56
+die 57
+die 58
+die 59
+die 60
+die 61
+die 62
+die 63
+die 64
+die 65
+die 66
+die 67
+die 68
+die 69
+die 70
+die 71
+die 72
+die 73
+die 74
+die 75
+die 76
+die 77
+die 78
+die 79
+die 80
+die 81
+die 82
+die 83
+die 84
+die 85
+die 86
+die 87
+die 88
+die 89
+die 90
+die 91
+die 92
+die 93
+die 94
+die 95
+die 96
+die 97
+die 98
+die 99
+die 100
+&twhat a nice number.&FF
+die 101
+die 102
+die 103
+die 104
+die 105
+die 106
+die 107
+die 108
+die 109
+die 110
+die 111
+die 112
+die 113
+die 114
+die 115
+die 116
+die 117
+die 118
+die 119
+die 120
+die 121
+die 122
+die 123
+die 124
+die 125
+die 126
+die 127
+die 128
+die 129
+die 130
+die 131
+die 132
+die 133
+die 134
+die 135
+die 136
+die 137
+die 138
+die 139
+die 140
+die 141
+die 142
+die 143
+die 144
+die 145
+die 146
+die 147
+&tyou look around, waiting&FF
+die 148
+die 149
+die 150
+die 151
+die 152
+die 153
+die 154
+die 155
+die 156
+die 157
+die 158
+die 159
+die 150
+die 160
+die 161
+die 162
+die 163
+die 164
+die 165
+die 166
+die 167
+die 168
+die 169
+die 170
+die 171
+die 172
+die 173
+die 174
+die 175
+die 176
+die 177
+die 178
+die 179
+die 180
+die 181
+die 182
+die 183
+die 184
+die 185
+die 186
+die 187
+die 188
+die 189
+die 190
+die 191
+die 192
+die 193
+die 194
+die 195
+die 196
+die 197
+die 198
+die 199
+die 200
+die 201
+die 202
+die 203
+die 204
+die 205
+&tyou might want to grab a snack&FF
+die 206
+die 207
+die 208
+die 209
+die 210
+die 211
+die 212
+die 213
+die 214
+die 215
+die 216
+die 217
+die 218
+die 219
+die 220
+die 221
+die 222
+die 223
+die 224
+die 225
+die 226
+die 227
+die 228
+die 229
+die 230
+die 231
+die 232
+die 233
+die 234
+die 235
+die 236
+die 237
+die 238
+die 239
+die 240
+die 241
+die 242
+die 243
+die 244
+die 245
+die 246
+die 247
+die 248
+die 249
+die 250
+die 251
+die 252
+die 253
+die 254
+die 255
+die 256
+die 257
+die 258
+die 259
+die 260
+die 261
+die 262
+die 263
+die 264
+die 265
+die 266
+die 267
+die 268
+die 269
+die 270
+die 271
+die 272
+die 273
+die 274
+die 275
+die 276
+die 277
+die 278
+die 279
+die 280
+die 281
+die 282
+die 283
+&tdice dice dice&FF
+die 284
+die 285
+die 286
+die 287
+die 288
+die 289
+die 290
+die 291
+die 292
+die 293
+die 294
+die 295
+die 296
+die 297
+die 298
+die 299
+die 300
+die 301
+die 302
+die 303
+die 304
+die 305
+die 306
+die 307
+die 308
+die 309
+die 310
+die 311
+die 312
+die 313
+die 314
+die 315
+die 316
+die 317
+die 318
+die 319
+die 320
+die 321
+die 322
+die 323
+die 324
+die 325
+die 326
+die 327
+die 328
+die 329
+die 330
+die 331
+die 332
+die 333
+die 334
+die 335
+die 336
+die 337
+die 338
+die 339
+die 340
+die 341
+die 342
+die 343
+die 344
+die 345
+die 346
+die 347
+die 348
+die 349
+die 350
+die 351
+die 352
+die 353
+die 354
+die 355
+die 356
+die 357
+die 358
+die 359
+die 360
+die 361
+die 362
+die 363
+die 364
+die 365
+die 366
+die 367
+die 368
+die 369
+die 370
+die 371
+die 372
+die 373
+die 374
+die 375
+die 376
+die 377
+die 378
+die 379
+die 380
+die 381
+die 382
+die 383
+die 384
+die 385
+die 386
+die 387
+die 388
+die 389
+die 390
+die 391
+die 392
+die 393
+die 394
+die 395
+die 396
+die 397
+die 398
+die 399
+die 400
+die 401
+die 402
+die 403
+die 404
+die 405
+die 406
+die 407
+die 408
+die 409
+die 410
+die 411
+die 412
+die 413
+die 414
+die 415
+die 416
+die 417
+die 418
+die 419
+die 420
+die 421
+die 422
+die 423
+die 424
+die 425
+die 426
+die 427
+die 428
+die 429
+die 430
+die 431
+die 432
+die 433
+die 434
+die 435
+die 436
+die 437
+die 438
+die 439
+die 440
+die 441
+die 442
+die 443
+die 444
+die 445
+die 446
+die 447
+die 448
+die 449
+die 450
+die 451
+die 452
+die 453
+die 454
+die 455
+die 456
+die 457
+die 458
+die 459
+die 460
+die 461
+die 462
+die 463
+die 464
+die 465
+die 466
+die 467
+die 468
+die 469
+die 470
+die 471
+die 472
+die 473
+die 474
+die 475
+die 476
+die 477
+die 478
+die 479
+die 480
+die 481
+die 482
+die 483
+die 484
+die 485
+die 486
+die 487
+die 488
+die 489
+die 490
+die 491
+die 492
+die 493
+die 494
+die 495
+die 496
+die 497
+die 498
+die 499
+
+>>dtree.type("...                ")
+>>dtree.goto([[why]])
+
+::why
+
+&tthere really were.
+what was I doing?&FF
+
+>>dtree.goto([[main]])    
+
+::command special 1
+>>dtree.type("iadhflaksjdfhladf")
+>>dtree.goto([[unknown command]])
+
+::unknown command
+
+&C0Unknown command
+
+&twhat were you trying to do there?
+
+[[command dir 1]]List directory contents
+
+
+
+::roll ones clear
+>>text.func_clear_screen()
+>>dtree.goto([[roll ones]])
+
+::roll ones
+
+
+
+
+
+
+The terminal disappears, and the cube
+with it. Rather violently. 500 dice
+each rolled a one, and here in the
+middle of space &C0something&FF hit the cube.
+
+
+
+
+
+&C0Bad ending. &FFYou might've missed
+something important, or watched a list
+of dice for too long.
+
+Due to "engine" limitations, restart
+the program to rest.
+::roll hundreds clear
+>>text.func_clear_screen()
+>>dtree.goto([[roll hundreds]])
+
+::roll hundreds
+
+
+
+
+
+
+The terminal goes black. &F0Something&FF is
+happening. Part of the cube slides
+open, revealing hundreds of dice. You
+don't know what this has to do with
+anything in the terminal, but it seems
+to be your reward.
+
+
+
+&F0Good ending. &FFWell done!
+
+Due to "engine" limitations, restart
+the program to rest.
+
+::roll the dice
+>>logic.goto_conditional(flags.thrusters_activated, [[roll hundreds clear]], [[roll ones clear]])

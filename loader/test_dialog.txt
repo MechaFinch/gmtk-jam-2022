@@ -1,11 +1,19 @@
 ::epic gaming
 
-wow gamers, this is epic
-truly wonderful
+wow &FDgamers&FF, &1Fthis is &E0epic
+&FFtruly wonderful
 
-[[gaming 1]] 1. choice 1
-[[gaming 2]] 2. choice 2
-[[gaming 3]] choice 3 (look at that lack of 3.!!)
+[[gaming 1]] choice 1
+[[gaming 2]]choice 2
+[[gaming 3]]choice 3
+[[test]]test named colors
+[[radio]]set radio timer
+
+::radio
+radio timer set
+
+>>later.set_timer_var(constants.five_minutes, logic.set_radio_send_1)
+>>dtree.goto([[epic gaming]])
 
 ::gaming 1
 
@@ -14,8 +22,32 @@ simply wonderful
 [[epic gaming]] epic gaming
 
 ::gaming 2
-[[epic gaming]] epic gaming
+
+
+Testing slow type
+
+>>dtree.type("this text will be written slowly")
+>>dtree.goto([[gaming 2 choices]])
+
+::gaming 2 choices
+and this text is written quickly
+
+[[epic gaming]]back to start
+
 
 ::gaming 3
-gaming
+gaming flag set
 [[epic gaming]] epic gaming (3)
+
+::test
+this is the default text
+
+&tThis is a side thought
+
+&dHere's some data
+
+does this text display in data color, or default color?
+
+[[epic gaming]] This is a choice that should be choice colored
+[[gaming 1]] &iThis represents an instruction
+[[gaming 2]] but what color is this text?

@@ -216,6 +216,152 @@ func_print_string:
 	POP I
 	POP BP
 	RET
+	
+
+; function uint16 print_colored_string(uint8* string, uint16 length, uint8 color, uint8 row, uint8 column)
+; draws a string starting at (row, column)
+; respects &<color number> in the text for changing current color
+; returns the position of the cursor as column:row
+func_print_string_colored:
+	PUSH BP
+	MOV BP, SP
+	
+	PUSH I
+	PUSH J
+	
+	; J:I	string pointer
+	; AH	col
+	; AL	row
+	; DH	color
+	; DL	char
+	; C		counter
+	
+	MOVW J:I, [BP + 8]	; string
+	MOV C, [BP + 12]	; length
+	MOV DH, [BP + 14]	; color
+	MOV A, [BP + 15]	; column:row
+	
+.print_loop:
+	; get character
+	MOV DL, [J:I]
+	INC I
+	ICC J
+	
+	; newlines are newlines
+	CMP DL, 0x0A
+	JE .wrap
+	
+	; ampersand sets color
+	CMP DL, 0x26
+	JNE .dont_change
+	
+	; get next character
+	DEC C
+	JZ .return
+	MOV DL, [J:I]
+	INC I
+	ICC J
+	
+	; if ampersand, it's not color
+	CMP DL, 0x26
+	JE .dont_change
+	
+	; convert to upper half byte
+	CMP DL, 0x41
+	JAE .high_1
+	
+.low_1:
+	SUB DL, 0x30
+	JMP .lower_char
+
+.high_1:
+	SUB DL, (0x41 - 10)
+	
+.lower_char:
+	SHL DL, 4
+	MOV DH, DL
+
+	; other char
+	DEC C
+	JZ .return
+	MOV DL, [J:I]
+	INC I
+	ICC J
+	
+	CMP DL, 0x41
+	JAE .high_2
+
+.low_2:
+	SUB DL, 0x30
+	JMP .make_num
+
+.high_2:
+	SUB DL, (0x41 - 10)
+	
+.make_num:
+	AND DL, 0x0F
+	OR DH, DL
+	JMP .print_loop_next
+
+.dont_change:
+	; draw character
+	PUSH A
+	PUSH B
+	PUSH C
+	PUSH D
+	
+	PUSH A
+	PUSH D
+	CALL func_draw_character
+	ADD SP, 4
+	
+	POP D
+	POP C
+	POP B
+	POP A
+	
+	; increment column
+	INC AH
+	
+	; wrap if needed
+	CMP AH, SCREEN_WIDTH_CHARACTERS
+	JB .print_loop_next
+	
+.wrap:
+	XOR AH, AH
+	INC AL
+	
+	; scroll screen if needed
+	CMP AL, SCREEN_HEIGHT_CHARACTERS
+	JL .print_loop_next
+	
+	; scroll screen
+	PUSH A
+	PUSH B
+	PUSH C
+	PUSH D
+	
+	PUSH byte 1
+	CALL func_scroll_screen
+	ADD SP, 1
+	
+	POP D
+	POP C
+	POP B
+	POP A
+	
+	MOV AL, SCREEN_HEIGHT_CHARACTERS - 1
+	
+.print_loop_next:
+	; just loop
+	DEC C
+	JNZ .print_loop
+	
+.return:
+	POP J
+	POP I
+	POP BP
+	RET
 
 
 ; function void scroll_screen(sint8 rows)

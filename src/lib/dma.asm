@@ -33,16 +33,19 @@
 ; function void init()
 ; initializes the heap
 func_init:
-	; Set HEAP_START + 0 to HEAP_START + 8
-	MOVW D:A, HEAP_START + 8
+	; Set HEAP_START + 0 to HEAP_START + 16
+	MOVW D:A, HEAP_START + 16
 	MOVW [HEAP_START + 0], D:A
 	
-	; Set HEAP_START + 4 to HEAP_START + 8
+	; Set HEAP_START + 4 to HEAP_START + 16
 	MOVW [HEAP_START + 4], D:A
 	
-	; Set HEAP_START + 8 to zero
+	; Set HEAP_START + 16 to zero
 	MOV B, 0x00
 	MOVW [D:A], B
+	
+	; Set HEAP_START + 14 to zero
+	MOV [D:A - 2], B
 	
 	RET
 
@@ -189,7 +192,7 @@ func_malloc:
 	JNE .check_usable
 	
 	; loop around
-	MOVW J:I, HEAP_START + 8	; current = HEAP_START + 8
+	MOVW J:I, HEAP_START + 16	; current = HEAP_START + 16
 	JMP .main_loop
 
 .check_usable:
@@ -327,6 +330,7 @@ func_free:
 	MOV [J:I + D - 2], D		; [block + blockSize - 2] = blockSize
 	
 	; return
+.return:
 	POP BP
 	RET
 	
@@ -399,9 +403,11 @@ func_realloc:
 	MOV B, [J:I]
 	AND B, 0xFFFE
 	
-	; if(blockSize <= allocSize) return ptr
+	PUSH B ; save blockSize
+	
+	; if(blockSize >= allocSize) return ptr
 	CMP B, A
-	JBE .return_ptr
+	JAE .return_ptr
 
 .larger:
 	; C = nextBlockHeader = [ptr + blockSize]
@@ -442,6 +448,8 @@ func_realloc:
 	MOV [J:I + A], C
 
 .return_ptr:
+	ADD SP, 2 ; saved blockSize
+	
 	; return whatever pointer's in J:I
 	ADD I, 2
 	ICC J
@@ -456,6 +464,7 @@ func_realloc:
 	; size - 8 points to the last 4 bytes of a block
 	; that >> 2 lets us count by 4s
 	; no information is lost because sizes are multiples of 8
+	POP B
 	CMP B, A
 	JAE .get_new_next
 	MOV A, B
@@ -479,12 +488,14 @@ func_realloc:
 	; save ptr and newBlock
 	PUSH A
 	PUSH D
-	PUSH J
-	PUSH I
 	
 	; setup J:I = source and BP = destination (so we can transfer 4 bytes at a time)
 	ADD I, 2
 	ICC J
+	
+	PUSH J
+	PUSH I
+	
 	MOVW BP, D:A
 .copy_loop:
 	; end on wrap around

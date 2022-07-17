@@ -1,17 +1,12 @@
 #entry init.main
-obj\init.obj
-obj\handlers.obj
-obj\dtree.obj
+obj\globals.obj
+obj\later.obj
+obj\logic.obj
+obj\constants.obj
 obj\dialog.obj
+obj\dtree.obj
+obj\handlers.obj
 obj\dma.obj
-obj\globals.obj
-obj\globals.obj
-obj\runlater.obj
 obj\text.obj
-obj\text.obj
-obj\globals.obj
-obj\runlater.obj
-obj\dma.obj
-obj\globals.obj
-obj\dma.obj
-obj\globals.obj
+obj\init.obj
+obj\flags.obj
